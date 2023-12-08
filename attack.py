@@ -1,5 +1,6 @@
 import torch
 
+
 def get_malicious_updates_fang_trmean(all_updates, deviation, n_attackers, epoch_num, compression='none', q_level=2, norm='inf'):
     b = 2
     max_vector = torch.max(all_updates, 0)[0]
@@ -54,7 +55,7 @@ def agr_attack_median(all_updates, model_re, n_attackers, dev_type='unit_vec'):
     elif dev_type == 'std':
         deviation = torch.std(all_updates, 0)
 
-    lamda = torch.Tensor([10.0]).cuda() #compute_lambda_our(all_updates, model_re, n_attackers)
+    lamda = torch.Tensor([10.0])#.cuda() #compute_lambda_our(all_updates, model_re, n_attackers)
 
     threshold_diff = 1e-5
     prev_loss = -1
