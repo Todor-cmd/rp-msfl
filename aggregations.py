@@ -10,7 +10,8 @@ def fedmes_adjustment(gradients, overlap_weight_index):
             params_to_add.append(gradients[client_id])
             params_to_add.append(gradients[client_id])
 
-    return gradients + params_to_add
+    stacked_params_to_add = torch.stack(params_to_add, dim=0)
+    return torch.cat((gradients,stacked_params_to_add), dim = 0)
 
 
 def fedmes_median(gradients, overlap_weight_index):
