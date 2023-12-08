@@ -104,6 +104,9 @@ chkpt='./'+aggregation
 
 results = []
 
+server_control_dict = {0: [0, 1, 2, 3, 4, 5], 1: [1, 2, 5, 6, 7, 8], 2: [3, 4, 5, 7, 8, 9]}
+overlap_weight_index = {0: 1, 1: 2, 2: 2, 3: 2, 4: 2, 5: 3, 6: 1, 7: 2, 8: 2, 9: 1}
+
 for n_attacker in n_attackers:
     epoch_num = 0
     best_global_acc = 0
@@ -117,38 +120,57 @@ for n_attacker in n_attackers:
 
     while epoch_num <= args.epochs:
         user_grads=[]
-        if not epoch_num and epoch_num%nbatches == 0:
+
+        # Shuffle data for each epoch except the first one
+        if not epoch_num and epoch_num % nbatches == 0:
             np.random.shuffle(r)
             for i in range(nusers):
-                user_tr_data_tensors[i]=user_tr_data_tensors[i][r]
-                user_tr_label_tensors[i]=user_tr_label_tensors[i][r]
+                user_tr_data_tensors[i] = user_tr_data_tensors[i][r]
+                user_tr_label_tensors[i] = user_tr_label_tensors[i][r]
 
+        # Iterate over users, excluding attackers
         for i in range(n_attacker, nusers):
+            # Get a batch of inputs and targets for the current user
+            inputs = user_tr_data_tensors[i][
+                     (epoch_num % nbatches) * batch_size:((epoch_num % nbatches) + 1) * batch_size]
+            targets = user_tr_label_tensors[i][
+                      (epoch_num % nbatches) * batch_size:((epoch_num % nbatches) + 1) * batch_size]
 
-            inputs = user_tr_data_tensors[i][(epoch_num%nbatches)*batch_size:((epoch_num%nbatches) + 1) * batch_size]
-            targets = user_tr_label_tensors[i][(epoch_num%nbatches)*batch_size:((epoch_num%nbatches) + 1) * batch_size]
-
-        #   inputs, targets = inputs.cuda(), targets.cuda()
+            # Convert inputs and targets to PyTorch Variables
             inputs, targets = torch.autograd.Variable(inputs), torch.autograd.Variable(targets)
 
+            # Forward pass
             outputs = fed_model(inputs)
+
+            # Compute loss
             loss = criterion(outputs, targets)
+
+            # Zero out gradients, perform backward pass, and collect gradients
             fed_model.zero_grad()
             loss.backward(retain_graph=True)
-
-            param_grad=[]
+            param_grad = []
             for param in fed_model.parameters():
-                param_grad=param.grad.data.view(-1) if not len(param_grad) else torch.cat((param_grad,param.grad.view(-1)))
+                param_grad = param.grad.data.view(-1) if not len(param_grad) else torch.cat(
+                    (param_grad, param.grad.view(-1)))
 
-            user_grads=param_grad[None, :] if len(user_grads)==0 else torch.cat((user_grads,param_grad[None,:]), 0)
+            # Concatenate user gradients to the list
+            user_grads = param_grad[None, :] if len(user_grads) == 0 else torch.cat((user_grads, param_grad[None, :]),
+                                                                                    0)
 
+        # Store the collected user gradients as malicious gradients
         malicious_grads = user_grads
 
+        # Check if the current epoch is in the specified schedule
         if epoch_num in schedule:
+            # Iterate over parameter groups in the optimizer
             for param_group in optimizer_fed.param_groups:
+                # Update the learning rate of each parameter group using the specified decay factor (gamma)
                 param_group['lr'] *= gamma
-                print('New learnin rate ', param_group['lr'])
 
+                # Print the updated learning rate
+                print('New learning rate:', param_group['lr'])
+
+        # Add the parameters of the malicious clients depending on attack type
         if n_attacker > 0:
             if args.attack == 'lie':
                 mal_update = lie_attack(malicious_grads, z_values[n_attacker])
@@ -164,6 +186,7 @@ for n_attacker in n_attackers:
         if not epoch_num :
             print(malicious_grads.shape)
 
+        # Aggregate gradients
         if aggregation=='median':
             agg_grads=torch.median(malicious_grads,dim=0)[0]
 

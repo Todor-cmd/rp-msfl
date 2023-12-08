@@ -1,0 +1,9 @@
+*.log
+
+venv/
+env/
+.venv/
+
+*.gz
+
+*.pkl
