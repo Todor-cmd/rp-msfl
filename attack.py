@@ -46,7 +46,7 @@ def lie_attack(all_updates, z):
     std = torch.std(all_updates, dim=0)
     return avg + z * std
 
-def agr_attack_median(all_updates, model_re, n_attackers, dev_type='unit_vec'):
+def min_max_attack(all_updates, model_re, n_attackers, dev_type='unit_vec'):
 
     if dev_type == 'unit_vec':
         deviation = model_re / torch.norm(model_re)  # unit vector, dir opp to good dir

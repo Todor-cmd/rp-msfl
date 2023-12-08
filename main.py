@@ -1,36 +1,23 @@
 from __future__ import print_function
-import argparse, os, sys, csv, shutil, time, random, operator, pickle, ast, math
-import numpy as np
-import pandas as pd
-from torch.optim import Optimizer
-import torch.nn.functional as F
-import torch
-import pickle
-import torch.nn as nn
-import torch.nn.parallel
-import torch.backends.cudnn as cudnn
-import torch.optim as optim
-import torch.utils.data as data
-import torch.multiprocessing as mp
 
-#sys.path.insert(0,'./../utils/')
-from utils.logger import *
-from utils.eval import *
-from utils.misc import *
+import os
+import pickle
+
+import numpy as np
+
+import torch.nn as nn
+
 
 from cifar10.cifar10_normal_train import *
-from cifar10.cifar10_util import *
+
 from cifar10.cifar10_models import *
-from cifar10.adam import Adam
+
 from cifar10.sgd import SGD
 
 
 from arguments import Arguments
-from data import load_data
-from attack import agr_attack_median
 
-import torchvision.transforms as transforms
-import torchvision.datasets as datasets
+from attack import min_max_attack, lie_attack, get_malicious_updates_fang_trmean
 
 args = Arguments()
 
@@ -141,7 +128,7 @@ for n_attacker in n_attackers:
             inputs = user_tr_data_tensors[i][(epoch_num%nbatches)*batch_size:((epoch_num%nbatches) + 1) * batch_size]
             targets = user_tr_label_tensors[i][(epoch_num%nbatches)*batch_size:((epoch_num%nbatches) + 1) * batch_size]
 
-        #    inputs, targets = inputs.cuda(), targets.cuda()
+        #   inputs, targets = inputs.cuda(), targets.cuda()
             inputs, targets = torch.autograd.Variable(inputs), torch.autograd.Variable(targets)
 
             outputs = fed_model(inputs)
@@ -172,7 +159,7 @@ for n_attacker in n_attackers:
                 malicious_grads = get_malicious_updates_fang_trmean(malicious_grads, deviation, n_attacker, epoch_num)
             elif args.attack == 'agr':
                 agg_grads = torch.mean(malicious_grads, 0)
-                malicious_grads = agr_attack_median(malicious_grads, agg_grads, n_attacker, dev_type=dev_type)
+                malicious_grads = min_max_attack(malicious_grads, agg_grads, n_attacker, dev_type=dev_type)
 
         if not epoch_num :
             print(malicious_grads.shape)
@@ -183,16 +170,16 @@ for n_attacker in n_attackers:
         elif aggregation=='average':
             agg_grads=torch.mean(malicious_grads,dim=0)
 
-        elif aggregation=='trmean':
-            agg_grads=tr_mean(malicious_grads, n_attacker)
-
-        elif aggregation=='krum' or aggregation=='mkrum':
-            multi_k = True if aggregation == 'mkrum' else False
-            if epoch_num == 0: print('multi krum is ', multi_k)
-            agg_grads, krum_candidate = multi_krum(malicious_grads, n_attacker, multi_k=multi_k)
-
-        elif aggregation=='bulyan':
-            agg_grads, krum_candidate=bulyan(malicious_grads, n_attacker)
+        # elif aggregation=='trmean':
+        #     agg_grads= tr_mean(malicious_grads, n_attacker)
+        #
+        # elif aggregation=='krum' or aggregation=='mkrum':
+        #     multi_k = True if aggregation == 'mkrum' else False
+        #     if epoch_num == 0: print('multi krum is ', multi_k)
+        #     agg_grads, krum_candidate = multi_krum(malicious_grads, n_attacker, multi_k=multi_k)
+        #
+        # elif aggregation=='bulyan':
+        #     agg_grads, krum_candidate=bulyan(malicious_grads, n_attacker)
 
         del user_grads
 
