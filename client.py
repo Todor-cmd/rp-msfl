@@ -55,3 +55,13 @@ class Client:
 
         # Perform a step in the optimizer using the aggregated gradients
         self.optimizer_fed.step(model_grads)
+
+    def update_learning_rate(self, epoch_num, schedule, gamma):
+        if epoch_num in schedule:
+            # Iterate over parameter groups in the optimizer
+            for param_group in self.optimizer_fed.param_groups:
+                # Update the learning rate of each parameter group using the specified decay factor (gamma)
+                param_group['lr'] *= gamma
+
+                # Print the updated learning rate
+                print('New learning rate:', param_group['lr'])

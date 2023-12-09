@@ -10,9 +10,9 @@ import models.cifar as models
 
 class cifar_mlp(nn.Module):
     def __init__(self, ninputs=3 * 32 * 32, num_classes=10):
+        super(cifar_mlp, self).__init__()
         self.ninputs = ninputs
         self.num_classes = num_classes
-        super(cifar_mlp, self).__init__()
 
         self.features = nn.Sequential(
             nn.Linear(self.ninputs, 1024),

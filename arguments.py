@@ -9,7 +9,7 @@ class Arguments:
         self.dataset = "cifar_10"
         self.batch_size = 250
         self.resume = 0
-        self.epochs = 20#1200
+        self.epochs = 600#1200
 
         self.clients = 10
 

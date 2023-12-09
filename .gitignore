@@ -7,3 +7,11 @@ env/
 *.gz
 
 *.pkl
+
+__pycache__/
+
+# Ignore JetBrains IDE configuration files
+.idea/
+*.iml
+*.ipr
+*.iws

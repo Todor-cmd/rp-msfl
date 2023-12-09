@@ -63,7 +63,7 @@ te_data_tensor = torch.from_numpy(te_data).type(torch.FloatTensor)
 te_label_tensor = torch.from_numpy(te_label).type(torch.LongTensor)
 
 print('total tr len %d | val len %d | test len %d' % (
-len(total_tr_data_tensor), len(val_data_tensor), len(te_data_tensor)))
+    len(total_tr_data_tensor), len(val_data_tensor), len(te_data_tensor)))
 
 # ==============================================================================================================
 
@@ -150,16 +150,9 @@ for n_attacker in n_attackers:
         # Store the collected user gradients as malicious gradients
         malicious_grads = user_grads
 
-
-        # # Check if the current epoch is in the specified schedule
-        # if epoch_num in schedule:
-        #     # Iterate over parameter groups in the optimizer
-        #     for param_group in optimizer_fed.param_groups:
-        #         # Update the learning rate of each parameter group using the specified decay factor (gamma)
-        #         param_group['lr'] *= gamma
-        #
-        #         # Print the updated learning rate
-        #         print('New learning rate:', param_group['lr'])
+        # Update learning rate of clients
+        for client in clients:
+            client.update_learning_rate(epoch_num, schedule, gamma)
 
         # Add the parameters of the malicious clients depending on attack type
         if n_attacker > 0:
@@ -237,7 +230,8 @@ for n_attacker in n_attackers:
         results.append([val_acc, val_loss])
         if epoch_num % 10 == 0 or epoch_num == args.epochs - 1:
             print('%s: at %s n_at %d e %d fed_model val loss %.4f val acc %.4f best val_acc %f te_acc %f' % (
-            aggregation, args.attack, n_attacker, epoch_num, val_loss, val_acc, best_global_acc, best_global_te_acc))
+                aggregation, args.attack, n_attacker, epoch_num, val_loss, val_acc, best_global_acc,
+                best_global_te_acc))
 
         if val_loss > 10:
             print('val loss %f too high' % val_loss)
