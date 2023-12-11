@@ -3,14 +3,21 @@
   <component name="CsvFileAttributes">
     <option name="attributeMap">
       <map>
-        <entry key="\results.csv">
+        <entry key="\results\baseline-agr-0att-single.csv">
           <value>
             <Attribute>
               <option name="separator" value="," />
             </Attribute>
           </value>
         </entry>
-        <entry key="\results\baseline-agr-0att-single.csv">
+        <entry key="\results\fedmes-mean-no-attackers-600epochs.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="\results\msfl-3attackers-moverlap-600epoch.csv">
           <value>
             <Attribute>
               <option name="separator" value="," />

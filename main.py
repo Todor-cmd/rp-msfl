@@ -17,7 +17,7 @@ from cifar10.sgd import SGD
 
 from arguments import Arguments
 
-from attack import min_max_attack, lie_attack, get_malicious_updates_fang_trmean
+from attack import min_max_attack, lie_attack, get_malicious_updates_fang_trmean, our_attack_dist
 from client import Client
 
 args = Arguments()
@@ -90,21 +90,23 @@ fed_lr = 0.5
 criterion = nn.CrossEntropyLoss()
 use_cuda = torch.cuda.is_available()
 
-aggregation = 'median'
+aggregation = 'average'
 multi_k = False
 candidates = []
 
 dev_type = 'std'
 z_values = {3: 0.69847, 5: 0.7054, 8: 0.71904, 10: 0.72575, 12: 0.73891}
-n_attackers = [0]
+n_attackers = [2]
 
 arch = 'alexnet'
 chkpt = './' + aggregation
 
 results = []
 
-server_control_dict = {0: [0, 1, 2, 3, 4, 5], 1: [1, 2, 5, 6, 7, 8], 2: [3, 4, 5, 7, 8, 9]}
-overlap_weight_index = {0: 1, 1: 2, 2: 2, 3: 2, 4: 2, 5: 3, 6: 1, 7: 2, 8: 2, 9: 1}
+# Keep track of the clients each server reaches
+server_control_dict = {0: [0, 1, 2, 3, 4, 5], 1: [1, 2, 0, 6, 7, 8], 2: [3, 4, 0, 7, 8, 9]}
+# Keep track of weights
+overlap_weight_index = {0: 3, 1: 2, 2: 2, 3: 2, 4: 2, 5: 1, 6: 1, 7: 2, 8: 2, 9: 1}
 
 for n_attacker in n_attackers:
     epoch_num = 0
@@ -116,7 +118,7 @@ for n_attacker in n_attackers:
     # Create clients
     print("creating %d clients" % (nusers))
     for i in range(nusers):
-        if i < nusers - n_attacker:
+        if i >= n_attacker:
             clients.append(Client(i, False, arch, fed_lr, criterion))
         else:
             clients.append(Client(i, True, arch, fed_lr, criterion))
@@ -165,7 +167,7 @@ for n_attacker in n_attackers:
                 malicious_grads = get_malicious_updates_fang_trmean(malicious_grads, deviation, n_attacker, epoch_num)
             elif args.attack == 'agr':
                 agg_grads = torch.mean(malicious_grads, 0)
-                malicious_grads = min_max_attack(malicious_grads, agg_grads, n_attacker, dev_type=dev_type)
+                malicious_grads = our_attack_dist(malicious_grads, agg_grads, n_attacker, dev_type=dev_type)
 
         if not epoch_num:
             print(malicious_grads.shape)
@@ -197,13 +199,13 @@ for n_attacker in n_attackers:
 
         # Update models of clients taking into account the servers that reach it
         for client in clients:
-            if client.client_idx == 0:
+            if client.client_idx == 5:
                 client.update_model(server_aggregates[0])
             elif client.client_idx == 6:
                 client.update_model(server_aggregates[1])
             elif client.client_idx == 9:
                 client.update_model(server_aggregates[2])
-            elif client.client_idx == 5:
+            elif client.client_idx == 0:
                 comb_all = torch.mean(server_aggregates, dim=0)
                 client.update_model(comb_all)
             elif client.client_idx in [1, 2]:
@@ -216,8 +218,8 @@ for n_attacker in n_attackers:
                 comb_0_2 = torch.mean(server_aggregates[[0, 2]], dim=0)
                 client.update_model(comb_0_2)
 
-        val_loss, val_acc = test(val_data_tensor, val_label_tensor, clients[5].fed_model, criterion, use_cuda)
-        te_loss, te_acc = test(te_data_tensor, te_label_tensor, clients[5].fed_model, criterion, use_cuda)
+        val_loss, val_acc = test(val_data_tensor, val_label_tensor, clients[0].fed_model, criterion, use_cuda)
+        te_loss, te_acc = test(te_data_tensor, te_label_tensor, clients[0].fed_model, criterion, use_cuda)
 
         is_best = best_global_acc < val_acc
 
@@ -242,7 +244,7 @@ for n_attacker in n_attackers:
 print(results)
 print("Saving to results.csv")
 
-with open("results.csv", 'w') as csvfile:
+with open("results/results.csv", 'w') as csvfile:
     # creating a csv writer object
     csvwriter = csv.writer(csvfile)
 
