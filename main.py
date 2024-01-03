@@ -6,9 +6,9 @@ import csv
 
 import numpy as np
 
-import torch.nn as nn
+from topology import Topology
 
-from aggregations import fedmes_median, fedmes_mean
+import aggregations
 from cifar10.cifar10_normal_train import *
 
 from cifar10.cifar10_models import *
@@ -29,11 +29,11 @@ Y = data[1]
 # data loading
 
 nusers = args.clients
-user_tr_len = 2400
+user_tr_len = 2500
 
 total_tr_len = user_tr_len * nusers
-val_len = 3300
-te_len = 3300
+val_len = 5000
+te_len = 5000
 
 print('total data len: ', len(X))
 
@@ -96,22 +96,28 @@ candidates = []
 
 dev_type = 'std'
 z_values = {3: 0.69847, 5: 0.7054, 8: 0.71904, 10: 0.72575, 12: 0.73891}
-n_attackers = [2]
+n_attackers = [0]
 
 arch = 'alexnet'
 chkpt = './' + aggregation
 
 results = []
 
+topology = Topology('multi-cross')  # 'multi-cross', 'multi-line'
+
 # Keep track of the clients each server reaches
-server_control_dict = {0: [0, 1, 2, 3, 4, 5], 1: [1, 2, 0, 6, 7, 8], 2: [3, 4, 0, 7, 8, 9]}
-# Keep track of weights
-overlap_weight_index = {0: 3, 1: 2, 2: 2, 3: 2, 4: 2, 5: 1, 6: 1, 7: 2, 8: 2, 9: 1}
+server_control_dict = topology.get_server_control()
+# Keep track of weights where keys refer to server and lists contain weights associated with overlap of clients with
+# same index in server_control_dict.
+overlap_weight_index = topology.get_overlap_index()
 
 for n_attacker in n_attackers:
     epoch_num = 0
     best_global_acc = 0
     best_global_te_acc = 0
+    best_global_loss = 100
+    best_global_te_loss = 100
+    last_pos_step_epoch = 0
 
     clients = []
 
@@ -183,11 +189,28 @@ for n_attacker in n_attackers:
 
             agg_grads = []
             stacked_clients_in_reach = torch.stack(clients_in_reach, dim=0)
+
             if aggregation == 'median':
-                agg_grads = fedmes_median(stacked_clients_in_reach, overlap_weight_index)
+                agg_grads = aggregations.fedmes_median(stacked_clients_in_reach, overlap_weight_index[server])
 
             elif aggregation == 'average':
-                agg_grads = fedmes_mean(stacked_clients_in_reach, overlap_weight_index)
+                agg_grads = aggregations.fedmes_mean(stacked_clients_in_reach, overlap_weight_index[server])
+
+            elif aggregation == 'trimmed-mean':
+                agg_grads = aggregations.fedmes_tr_mean_v2(stacked_clients_in_reach, 1, overlap_weight_index[server])
+
+            elif aggregation == 'krum':
+                agg_grads = aggregations.fedmes_multi_krum(stacked_clients_in_reach, 1, overlap_weight_index[server])
+
+            elif aggregation == 'multi-krum':
+                agg_grads = aggregations.fedmes_multi_krum(
+                    stacked_clients_in_reach,
+                    n_attacker,
+                    overlap_weight_index[server],
+                    True)
+
+            elif aggregation == 'bulyan':
+                agg_grads = aggregations.fedmes_bulyan(stacked_clients_in_reach, 1, overlap_weight_index[server])
 
             server_aggregates.append(agg_grads)
 
@@ -199,35 +222,49 @@ for n_attacker in n_attackers:
 
         # Update models of clients taking into account the servers that reach it
         for client in clients:
-            if client.client_idx == 5:
+            if client.client_idx in topology.get_set_0():
                 client.update_model(server_aggregates[0])
-            elif client.client_idx == 6:
+            elif client.client_idx in topology.get_set_1():
                 client.update_model(server_aggregates[1])
-            elif client.client_idx == 9:
+            elif client.client_idx in topology.get_set_2():
                 client.update_model(server_aggregates[2])
-            elif client.client_idx == 0:
-                comb_all = torch.mean(server_aggregates, dim=0)
-                client.update_model(comb_all)
-            elif client.client_idx in [1, 2]:
+            elif client.client_idx in topology.get_set_0_1():
                 comb_0_1 = torch.mean(server_aggregates[:2], dim=0)
                 client.update_model(comb_0_1)
-            elif client.client_idx in [7, 8]:
+            elif client.client_idx in topology.get_set_1_2():
                 comb_1_2 = torch.mean(server_aggregates[1:], dim=0)
                 client.update_model(comb_1_2)
-            elif client.client_idx in [3, 4]:
+            elif client.client_idx in topology.get_set_0_2():
                 comb_0_2 = torch.mean(server_aggregates[[0, 2]], dim=0)
                 client.update_model(comb_0_2)
+            elif client.client_idx in topology.get_set_0_1_2():
+                comb_all = torch.mean(server_aggregates, dim=0)
+                client.update_model(comb_all)
 
         val_loss, val_acc = test(val_data_tensor, val_label_tensor, clients[0].fed_model, criterion, use_cuda)
         te_loss, te_acc = test(te_data_tensor, te_label_tensor, clients[0].fed_model, criterion, use_cuda)
 
-        is_best = best_global_acc < val_acc
+        # Check if best accuracy has changed
+        is_best_acc = best_global_acc < val_acc
 
         best_global_acc = max(best_global_acc, val_acc)
 
-        if is_best:
+        if is_best_acc:
             best_global_te_acc = te_acc
 
+        # Check if best loss changed
+        is_best_loss = best_global_loss > val_loss
+
+        best_global_loss = min(best_global_loss, val_loss)
+
+        if is_best_loss:
+            best_global_te_loss = te_loss
+
+        # mark epoch in which global model improved in loss or accuracy
+        if is_best_loss or is_best_acc:
+            last_pos_step_epoch = epoch_num
+
+        # Print result of training in epoch
         print("Acc: " + str(val_acc) + " Loss: " + str(val_loss))
         results.append([val_acc, val_loss])
         if epoch_num % 10 == 0 or epoch_num == args.epochs - 1:
@@ -237,6 +274,10 @@ for n_attacker in n_attackers:
 
         if val_loss > 10:
             print('val loss %f too high' % val_loss)
+            break
+
+        if (epoch_num - last_pos_step_epoch) > 100:
+            print('model convergence, last positive step in epoch %f' % last_pos_step_epoch)
             break
 
         epoch_num += 1

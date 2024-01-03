@@ -17,7 +17,7 @@
             </Attribute>
           </value>
         </entry>
-        <entry key="\results\msfl-3attackers-moverlap-600epoch.csv">
+        <entry key="\results\results.csv">
           <value>
             <Attribute>
               <option name="separator" value="," />
