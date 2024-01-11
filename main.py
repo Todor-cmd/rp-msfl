@@ -129,7 +129,7 @@ for n_attacker in n_attackers:
         else:
             clients.append(Client(i, True, arch, fed_lr, criterion))
 
-    # torch.cuda.empty_cache()
+    torch.cuda.empty_cache()
     r = np.arange(user_tr_len)
     while epoch_num <= args.epochs:
         user_grads = []

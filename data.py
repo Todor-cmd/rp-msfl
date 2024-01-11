@@ -1,6 +1,7 @@
 import os
 import numpy as np
 import pickle
+import torch
 import torchvision.transforms as transforms
 import torchvision.datasets as datasets
 

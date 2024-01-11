@@ -30,7 +30,7 @@ class cifar_mlp(nn.Module):
         return self.classifier(hidden_out)
 
 
-def get_model(config, parallel=True, cuda=False, device=0):
+def get_model(config, parallel=True, cuda=True, device=0):
     # print("==> creating model '{}'".format(config['arch']))
     if config['arch'].startswith('resnext'):
         model = models.__dict__[config['arch']](
@@ -70,8 +70,8 @@ def get_model(config, parallel=True, cuda=False, device=0):
     if parallel:
         model = torch.nn.DataParallel(model)
 
-    #if cuda:
-    #    model.cuda()
+    if cuda:
+       model.cuda()
 
     return model
 

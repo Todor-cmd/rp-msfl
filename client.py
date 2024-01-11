@@ -20,21 +20,22 @@ class Client:
         inputs, targets = torch.autograd.Variable(inputs), torch.autograd.Variable(targets)
 
         # Forward pass
-        outputs = self.fed_model(inputs)
+        outputs = self.fed_model(inputs.cuda())
 
         # Compute loss
-        loss = self.criterion(outputs, targets)
+        loss = self.criterion(outputs, targets.cuda())
 
         # Zero out gradients, perform backward pass, and collect gradients
         self.fed_model.zero_grad()
         loss.backward(retain_graph=True)
+
+        # Move the gradients to CPU for further processing if needed
         param_grad = []
         for param in self.fed_model.parameters():
-            param_grad = param.grad.data.view(-1) if not len(param_grad) else torch.cat(
-                (param_grad, param.grad.view(-1)))
+            grad_data = param.grad.data.cpu().view(-1)
+            param_grad = grad_data if not len(param_grad) else torch.cat((param_grad, grad_data))
 
         return param_grad
-
     def update_model(self, agg_grads):
         # Initialize the starting index for aggregating gradients
         start_idx = 0
@@ -50,7 +51,7 @@ class Client:
             # Extract a slice of aggregated gradients corresponding to the current parameter
             param_ = agg_grads[start_idx:start_idx + len(param.data.view(-1))].reshape(param.data.shape)
             start_idx = start_idx + len(param.data.view(-1))
-            param_ = param_  # .cuda()
+            param_ = param_.cuda()
             model_grads.append(param_)
 
         # Perform a step in the optimizer using the aggregated gradients
