@@ -6,34 +6,42 @@ torch.manual_seed(SEED)
 class Arguments:
     def __init__(self):
         
-        self.dataset = "cifar_10"
+        # Data-set
+        self.available_datasets = ["cifar10", "fashionmnist"]
+        self.dataset = self.available_datasets[0]
+        self.val_size = 5000
+        self.te_size = 5000 # Requirement: val_size + te_size = 10k
+        
+        # Model
+        self.arch = "alexnet" # "alexnet"
+        self.dev_type = "std" # "std"
+        
         self.batch_size = 250
-        self.resume = 0
         self.epochs = 1500
+        self.fed_lr = 0.5
+        
+        self.schedule = [1000, 1200]
+        self.gamma = 0.5
 
         self.clients = 20
+        
+        # Attack
+        self.num_attackers = 0
+        self.attack = "min-max"
+    
 
-        self.attack = "agr"
+        # Aggregation/Defense
+        self.aggregation = "Fedmes" # "Fedmes", "FMes-trimmed-mean", "FMes-krum", "FMes-multi-krum", "FMes-bulyan"
 
-        self.cuda = False
+        # CUDA
+        self.cuda = True
+        self.parallel = False
+        
+        self.save_final_model = False
+        
+        # How many epochs before the results are saved, disable with 0
+        self.batch_write = 0
+        
+        self.topology = "multi-cross" # "multi-cross", "multi-line
 
-#
-#        if self.dataset == "cifar_10":
-#            #self.net = Cifar10CNN
-#            # self.net = Cifar10ResNet
-#
-#            self.lr = 0.01
-#            self.momentum = 0.5
-#            self.scheduler_step_size = 50
-#            self.scheduler_gamma = 0.5
-#            self.min_lr = 1e-10
-#            self.N = 50000
-#            self.generator_image_num = 50
-#            self.generator_local_epoch = 10
-#            self.layer_image_num = 50
-#            self.layer_image_epoch = 10
-#            self.reduce = 1
-
-#            self.train_data_loader_pickle_path = "data_loaders/cifar10/train_data_loader.pickle"
-#            self.test_data_loader_pickle_path = "data_loaders/cifar10/test_data_loader.pickle"
 

@@ -5,17 +5,38 @@ from cifar10.sgd import SGD
 
 
 class Client:
-    def __init__(self, client_idx, is_mal, model_type, fed_lr, criterion):
+    def __init__(self, client_idx, is_mal, args,  data_loader, criterion):
         self.client_idx = client_idx
+        self.args = args
+        self.data_loader = data_loader
         self.is_mal = is_mal
-        self.model_type = model_type
-        self.fed_lr = fed_lr
+        self.model_type = args.arch
+        self.fed_lr = args.fed_lr
         self.criterion = criterion
 
-        self.fed_model, _ = return_model(model_type, 0.1, 0.9, parallel=False)
-        self.optimizer_fed = SGD(self.fed_model.parameters(), lr=fed_lr)
+        self.fed_model, self.optimizer_fed = return_model(self.model_type,\
+                                                          lr=args.fed_lr,\
+                                                          momentum=0.9,\
+                                                          parallel=args.parallel,\
+                                                          cuda=args.cuda)
+        
+        self.optimizer_fed = SGD(self.fed_model.parameters(), lr=args.fed_lr)
+        self.data_loader_iter = iter(self.data_loader)
+        self.data_loader_i = 0
+       
 
-    def train(self, inputs, targets):
+
+    def train(self):
+        # If all batches of data used, reset the data loader
+        if (self.data_loader_i == len(self.data_loader)):
+            self.data_loader_i = 0
+            self.data_loader_iter = iter(self.data_loader)
+
+        # Get next batch of data
+        inputs, targets = next(self.data_loader_iter)
+        self.data_loader_i = self.data_loader_i + 1
+
+
         # Convert inputs and labels to PyTorch Variables
         inputs, targets = torch.autograd.Variable(inputs), torch.autograd.Variable(targets)
 
@@ -36,6 +57,7 @@ class Client:
             param_grad = grad_data if not len(param_grad) else torch.cat((param_grad, grad_data))
 
         return param_grad
+    
     def update_model(self, agg_grads):
         # Initialize the starting index for aggregating gradients
         start_idx = 0

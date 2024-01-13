@@ -8,10 +8,11 @@ import os
 import sys
 import time
 import math
-
+import torch
 import torch.nn as nn
 import torch.nn.init as init
 from torch.autograd import Variable
+from datetime import datetime
 
 __all__ = ['get_mean_and_std', 'init_params', 'mkdir_p', 'AverageMeter']
 
@@ -74,3 +75,7 @@ class AverageMeter(object):
         self.sum += val * n
         self.count += n
         self.avg = self.sum / self.count
+def get_time_string():
+    t = datetime.now()
+    formatted_time = t.strftime('%d%m%y-%H%M')
+    return formatted_time
