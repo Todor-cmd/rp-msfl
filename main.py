@@ -17,7 +17,7 @@ from cifar10.sgd import SGD
 
 from arguments import Arguments
 
-from attack import min_max_attack, lie_attack, get_malicious_updates_fang_trmean, our_attack_dist
+from attack import our_attack_dist
 from client import Client
 
 args = Arguments()
@@ -81,7 +81,7 @@ for i in range(nusers):
 
 batch_size = 250
 resume = 0
-schedule = [1000]
+schedule = [800, 1000, 1200, 1400]
 nbatches = user_tr_len // batch_size
 
 gamma = .5
@@ -90,8 +90,7 @@ fed_lr = 0.5
 criterion = nn.CrossEntropyLoss()
 use_cuda = torch.cuda.is_available()
 
-aggregation = 'average'
-multi_k = False
+aggregation = 'average' # 'median', 'average', 'trimmed-mean', 'krum', 'multi-krum', 'bulyan', 'dnc'
 candidates = []
 
 dev_type = 'std'
@@ -156,31 +155,22 @@ for n_attacker in n_attackers:
                                                                                     0)
 
         # Store the collected user gradients as malicious gradients
-        malicious_grads = user_grads
-
+        malicious_grads = user_grads.cuda()
         # Update learning rate of clients
         for client in clients:
             client.update_learning_rate(epoch_num, schedule, gamma)
 
         # Add the parameters of the malicious clients depending on attack type
-        if n_attacker > 0:
-            if args.attack == 'lie':
-                mal_update = lie_attack(malicious_grads, z_values[n_attacker])
-                malicious_grads = torch.cat((torch.stack([mal_update] * n_attacker), malicious_grads))
-            elif args.attack == 'fang':
-                agg_grads = torch.mean(malicious_grads, 0)
-                deviation = torch.sign(agg_grads)
-                malicious_grads = get_malicious_updates_fang_trmean(malicious_grads, deviation, n_attacker, epoch_num)
-            elif args.attack == 'agr':
-                agg_grads = torch.mean(malicious_grads, 0)
-                malicious_grads = our_attack_dist(malicious_grads, agg_grads, n_attacker, dev_type=dev_type)
+        if n_attacker > 0:  
+            agg_grads = torch.mean(malicious_grads, 0)
+            malicious_grads = our_attack_dist(malicious_grads, agg_grads, n_attacker, dev_type=dev_type)
 
         if not epoch_num:
             print(malicious_grads.shape)
 
         # Store of aggregate gradients for servers
         server_aggregates = []
-
+        
         # For each server find the aggregate gradients of clients it reaches
         for server in server_control_dict.keys():
             clients_in_reach = []
@@ -197,10 +187,10 @@ for n_attacker in n_attackers:
                 agg_grads = aggregations.fedmes_mean(stacked_clients_in_reach, overlap_weight_index[server])
 
             elif aggregation == 'trimmed-mean':
-                agg_grads = aggregations.fedmes_tr_mean_v2(stacked_clients_in_reach, 1, overlap_weight_index[server])
+                agg_grads = aggregations.fedmes_tr_mean_v2(stacked_clients_in_reach, 2, overlap_weight_index[server])
 
             elif aggregation == 'krum':
-                agg_grads = aggregations.fedmes_multi_krum(stacked_clients_in_reach, 1, overlap_weight_index[server])
+                agg_grads = aggregations.fedmes_multi_krum(stacked_clients_in_reach, 2, overlap_weight_index[server])
 
             elif aggregation == 'multi-krum':
                 agg_grads = aggregations.fedmes_multi_krum(
@@ -210,7 +200,10 @@ for n_attacker in n_attackers:
                     True)
 
             elif aggregation == 'bulyan':
-                agg_grads = aggregations.fedmes_bulyan(stacked_clients_in_reach, 1, overlap_weight_index[server])
+                agg_grads = aggregations.fedmes_bulyan(stacked_clients_in_reach, 2, overlap_weight_index[server])
+                
+            elif aggregation == 'dnc':
+                agg_grads = aggregations.fmes_dnc(stacked_clients_in_reach, 2, overlap_weight_index[server], 1, 1, 10000)
 
             server_aggregates.append(agg_grads)
 

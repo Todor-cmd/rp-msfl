@@ -42,18 +42,40 @@ def fedmes_tr_mean_v2(all_updates, n_attackers, overlap_weight_index):
     return fedmes_elementwise_mean(selected_indexes, selected_updates, overlap_weight_index)
 
 
+# def fedmes_elementwise_mean(selected_indexes, selected_updates, overlap_weight_index):
+#     print(selected_indexes)
+#     total_selected_weight = torch.zeros_like(selected_indexes[0], dtype=torch.float32)
+
+#     # adjust for overlapping regions
+#     fedmes_mean_selected = torch.zeros_like(selected_indexes[0], dtype=torch.float32)
+#     for i in range(len(selected_indexes)):
+#         print (len(selected_indexes[i]))
+#         for j in range(len(selected_indexes[i])):
+#             client_index = selected_indexes[i][j].item()
+#             fedmes_mean_selected[j] += selected_updates[i][j] * overlap_weight_index[client_index]
+#             total_selected_weight[j] += overlap_weight_index[client_index]
+
+#     return fedmes_mean_selected / total_selected_weight
+
 def fedmes_elementwise_mean(selected_indexes, selected_updates, overlap_weight_index):
     total_selected_weight = torch.zeros_like(selected_indexes[0], dtype=torch.float32)
 
-    # adjust for overlapping regions
+    # Adjust for overlapping regions
     fedmes_mean_selected = torch.zeros_like(selected_indexes[0], dtype=torch.float32)
+    
+    overlap_weight_tensor= torch.tensor(overlap_weight_index).cuda()
+    
     for i in range(len(selected_indexes)):
-        for j in range(len(selected_indexes[i])):
-            client_index = selected_indexes[i][j].item()
-            fedmes_mean_selected[j] += selected_updates[i][j] * overlap_weight_index[client_index]
-            total_selected_weight[j] += overlap_weight_index[client_index]
+        client_indices = selected_indexes[i].long()  # Ensure indices are of type long
+        client_weights = overlap_weight_tensor[client_indices]
+        
+        fedmes_mean_selected += selected_updates[i] * client_weights
+        total_selected_weight += client_weights
 
-    return fedmes_mean_selected / total_selected_weight
+    # Use broadcasting to divide element-wise
+    result = fedmes_mean_selected / total_selected_weight
+
+    return result
 
 
 def fedmes_adjustment_selected(candidates, candidate_indices, overlap_weight_index):
@@ -104,7 +126,7 @@ def fedmes_multi_krum(all_updates, n_attackers, overlap_weight_index, multi_k=Fa
 
     aggregate = torch.mean(fedmes_adjusted_candidates, dim=0)
 
-    return aggregate, np.array(candidate_indices)
+    return aggregate
 
 
 def fedmes_bulyan(all_updates, n_attackers, overlap_weight_index):
@@ -153,6 +175,45 @@ def fedmes_bulyan(all_updates, n_attackers, overlap_weight_index):
 
     # Adjust for fedmes
     fedmes_adjusted_candidates = fedmes_adjustment_selected(selected_updates, selected_indexes, overlap_weight_index)
+
+    aggregate = torch.mean(fedmes_adjusted_candidates, dim=0)
+
+    return aggregate
+   
+def fmes_dnc(all_updates, n_attackers, overlap_weight_index, filtering_fraction, niters, subsample_dimension):
+    selected_indices_set = set()
+
+    gradient_dimension = all_updates.shape[1]
+    
+    for _ in range(niters):
+        # Randomly select subsample_dimension number of dimensions
+        random_dimensions = torch.sort(torch.randperm(gradient_dimension)[:subsample_dimension]).values
+        
+        # Subsample the input gradients using the randomly selected dimensions
+        subsampled_gradients = all_updates[:, random_dimensions]
+        
+        # Compute the mean of the subsampled gradients along each dimension
+        mean_gradients = torch.mean(subsampled_gradients, dim=0)
+        
+        # Center the subsampled gradients by subtracting the mean
+        centered_gradients = subsampled_gradients - mean_gradients
+
+        # Perform Singular Value Decomposition (SVD) to get the top right singular vector
+        _, _, right_singular_vector = torch.svd(centered_gradients)
+        top_right_singular_vector = right_singular_vector[:, -1]
+
+        # Compute outlier scores based on the projections along the top right singular vector
+        outlier_scores = torch.sum((subsampled_gradients - mean_gradients) @ top_right_singular_vector[:, None], dim=1) ** 2
+        
+        # Compute indices of the gradients with lowest outlier scores
+        selected_indices_set.update(torch.argsort(outlier_scores)[:len(outlier_scores) - int(filtering_fraction * n_attackers)])
+
+    # Get selected_updates
+    selected_indices = [i.item() for i in selected_indices_set]
+    selected_updates = all_updates[selected_indices]
+
+    # Adjust for fedmes
+    fedmes_adjusted_candidates = fedmes_adjustment_selected(selected_updates, selected_indices, overlap_weight_index)
 
     aggregate = torch.mean(fedmes_adjusted_candidates, dim=0)
 

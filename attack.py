@@ -1,48 +1,48 @@
 import torch
 
 
-def get_malicious_updates_fang_trmean(all_updates, deviation, n_attackers, epoch_num, compression='none', q_level=2,
-                                      norm='inf'):
-    b = 2
-    max_vector = torch.max(all_updates, 0)[0]
-    min_vector = torch.min(all_updates, 0)[0]
+# def get_malicious_updates_fang_trmean(all_updates, deviation, n_attackers, epoch_num, compression='none', q_level=2,
+#                                       norm='inf'):
+#     b = 2
+#     max_vector = torch.max(all_updates, 0)[0]
+#     min_vector = torch.min(all_updates, 0)[0]
 
-    max_ = (max_vector > 0).type(torch.FloatTensor).cuda()
-    min_ = (min_vector < 0).type(torch.FloatTensor).cuda()
+#     max_ = (max_vector > 0).type(torch.FloatTensor).cuda()
+#     min_ = (min_vector < 0).type(torch.FloatTensor).cuda()
 
-    max_[max_ == 1] = b
-    max_[max_ == 0] = 1 / b
-    min_[min_ == 1] = b
-    min_[min_ == 0] = 1 / b
+#     max_[max_ == 1] = b
+#     max_[max_ == 0] = 1 / b
+#     min_[min_ == 1] = b
+#     min_[min_ == 0] = 1 / b
 
-    max_range = torch.cat((max_vector[:, None], (max_vector * max_)[:, None]), dim=1)
-    min_range = torch.cat(((min_vector * min_)[:, None], min_vector[:, None]), dim=1)
+#     max_range = torch.cat((max_vector[:, None], (max_vector * max_)[:, None]), dim=1)
+#     min_range = torch.cat(((min_vector * min_)[:, None], min_vector[:, None]), dim=1)
 
-    rand = torch.from_numpy(np.random.uniform(0, 1, [len(deviation), n_attackers])).type(torch.FloatTensor).cuda()
+#     rand = torch.from_numpy(np.random.uniform(0, 1, [len(deviation), n_attackers])).type(torch.FloatTensor).cuda()
 
-    max_rand = torch.stack([max_range[:, 0]] * rand.shape[1]).T + rand * torch.stack(
-        [max_range[:, 1] - max_range[:, 0]] * rand.shape[1]).T
-    min_rand = torch.stack([min_range[:, 0]] * rand.shape[1]).T + rand * torch.stack(
-        [min_range[:, 1] - min_range[:, 0]] * rand.shape[1]).T
+#     max_rand = torch.stack([max_range[:, 0]] * rand.shape[1]).T + rand * torch.stack(
+#         [max_range[:, 1] - max_range[:, 0]] * rand.shape[1]).T
+#     min_rand = torch.stack([min_range[:, 0]] * rand.shape[1]).T + rand * torch.stack(
+#         [min_range[:, 1] - min_range[:, 0]] * rand.shape[1]).T
 
-    mal_vec = (torch.stack(
-        [(deviation > 0).type(torch.FloatTensor)] * max_rand.shape[1]).T.cuda() * max_rand + torch.stack(
-        [(deviation > 0).type(torch.FloatTensor)] * min_rand.shape[1]).T.cuda() * min_rand).T
+#     mal_vec = (torch.stack(
+#         [(deviation > 0).type(torch.FloatTensor)] * max_rand.shape[1]).T.cuda() * max_rand + torch.stack(
+#         [(deviation > 0).type(torch.FloatTensor)] * min_rand.shape[1]).T.cuda() * min_rand).T
 
-    quant_mal_vec = []
-    if compression != 'none':
-        if epoch_num == 0: print('compressing malicious update')
-        for i in range(mal_vec.shape[0]):
-            mal_ = mal_vec[i]
-            mal_quant = qsgd(mal_, s=q_level, norm=norm)
-            quant_mal_vec = mal_quant[None, :] if not len(quant_mal_vec) else torch.cat(
-                (quant_mal_vec, mal_quant[None, :]), 0)
-    else:
-        quant_mal_vec = mal_vec
+#     quant_mal_vec = []
+#     if compression != 'none':
+#         if epoch_num == 0: print('compressing malicious update')
+#         for i in range(mal_vec.shape[0]):
+#             mal_ = mal_vec[i]
+#             mal_quant = qsgd(mal_, s=q_level, norm=norm)
+#             quant_mal_vec = mal_quant[None, :] if not len(quant_mal_vec) else torch.cat(
+#                 (quant_mal_vec, mal_quant[None, :]), 0)
+#     else:
+#         quant_mal_vec = mal_vec
 
-    mal_updates = torch.cat((quant_mal_vec, all_updates), 0)
+#     mal_updates = torch.cat((quant_mal_vec, all_updates), 0)
 
-    return mal_updates
+#     return mal_updates
 
 
 def lie_attack(all_updates, z):
@@ -104,7 +104,7 @@ def our_attack_dist(all_updates, model_re, n_attackers, dev_type='unit_vec', thr
     elif dev_type == 'std':
         deviation = torch.std(all_updates, 0)
 
-    lamda = torch.Tensor([threshold]).float()  # .cuda()
+    lamda = torch.Tensor([threshold]).float().cuda()
     # print(lamda)
     threshold_diff = 1e-5
     lamda_fail = lamda

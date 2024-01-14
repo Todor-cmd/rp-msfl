@@ -24,7 +24,7 @@ class Test(TestCase):
         # Example input data
         all_updates = torch.tensor([[1.0, 2.0, 3.0], [4.0, 5.0, 6.0], [7.0, 8.0, 9.0]])
         n_attackers = 1
-        overlap_weight_index = {0: 1, 1: 2, 2: 3}
+        overlap_weight_index = [1, 2, 3]
 
         # Call the function
         result = aggregations.fedmes_tr_mean_v2(all_updates, n_attackers, overlap_weight_index)
@@ -39,7 +39,7 @@ class Test(TestCase):
         # Example input data
         all_updates = torch.tensor([[7.0, 5.0, 3.0], [4.0, 2.0, 6.0], [1.0, 8.0, 9.0], [10.0, 11.0, 12.0]])
         n_attackers = 1
-        overlap_weight_index = {0: 1, 1: 2, 2: 3, 3: 4}
+        overlap_weight_index = [1, 2, 3, 4]
 
         # Call the function
         result = aggregations.fedmes_tr_mean_v2(all_updates, n_attackers, overlap_weight_index)
