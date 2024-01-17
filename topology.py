@@ -13,17 +13,31 @@ class Topology:
                 1: [2, 2, 1, 1, 1, 1, 2, 2],
                 2: [2, 2, 1, 1, 1, 1, 1, 1]
             }
-        else:
+        elif topology == 'attack case 1':
+            # Aack case  1
             self.server_control_dict = {
                 0: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11],
-                1: [0, 1, 2, 3, 4, 5, 12, 13, 14, 15, 16, 17],
-                2: [0, 1, 6, 7, 8, 9, 12, 13, 14, 15, 18, 19]
+                1: [0, 2, 3, 4, 5, 11, 12, 13, 14, 15, 16, 17],
+                2: [0, 2, 6, 7, 8, 9, 12, 13, 14, 15, 18, 19]
             }
             self.overlap_weight_index = {
-                0: [3, 3, 2, 2, 2, 2, 2, 2, 2, 2, 1, 1],
+                0: [3, 1, 3, 2, 2, 2, 2, 2, 2, 2, 1, 2],
                 1: [3, 3, 2, 2, 2, 2, 2, 2, 2, 2, 1, 1],
                 2: [3, 3, 2, 2, 2, 2, 2, 2, 2, 2, 1, 1]
             }
+        else:
+            # Attack case 2
+            self.server_control_dict = {
+                0: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11],
+                1: [0, 1, 2, 3, 4, 5, 12, 13, 14, 15, 16, 17],
+                2: [0, 2, 6, 7, 8, 9, 12, 13, 14, 15, 18, 19]
+            }
+            self.overlap_weight_index = {
+                0: [3, 2, 3, 2, 2, 2, 2, 2, 2, 2, 1, 1],
+                1: [3, 2, 3, 2, 2, 2, 2, 2, 2, 2, 1, 1],
+                2: [3, 3, 2, 2, 2, 2, 2, 2, 2, 2, 1, 1]
+            }
+        
 
     def get_topology(self):
         return self.topology
@@ -33,52 +47,39 @@ class Topology:
 
     def get_overlap_index(self):
         return self.overlap_weight_index
+        
+    def is_set_0(self, client_id):
+        return client_id in self.server_control_dict[0]\
+            and client_id not in self.server_control_dict[1]\
+            and client_id not in self.server_control_dict[2]
+    
+    def is_set_1(self, client_id):
+        return client_id in self.server_control_dict[1]\
+            and client_id not in self.server_control_dict[0]\
+            and client_id not in self.server_control_dict[2]
+    
+    def is_set_2(self, client_id):
+        return client_id in self.server_control_dict[2]\
+            and client_id not in self.server_control_dict[0]\
+            and client_id not in self.server_control_dict[1]
+    
+    def is_set_0_1(self, client_id):
+        return client_id in self.server_control_dict[0]\
+            and client_id in self.server_control_dict[1]\
+            and client_id not in self.server_control_dict[2]
 
-
-    def get_set_0(self):
-        if self.topology == 'multi-line':
-            return [0, 1, 2, 3, 4, 5]
-        else:
-            return [10, 11]
-
-
-    def get_set_1(self):
-        if self.topology == 'multi-line':
-            return [8, 9, 10, 11]
-        else:
-            return [16, 17]
-
-
-    def get_set_2(self):
-        if self.topology == 'multi-line':
-            return [14, 15, 16, 17, 18, 19]
-        else:
-            return [18, 19]
-
-
-    def get_set_0_1(self):
-        if self.topology == 'multi-line':
-            return [6, 7]
-        else:
-            return [2, 3, 4, 5]
-
-
-    def get_set_1_2(self):
-        if self.topology == 'multi-line':
-            return [12, 13]
-        else:
-            return [12, 13, 14, 15]
-
-
-    def get_set_0_2(self):
-        if self.topology == 'multi-line':
-            return []
-        else:
-            return [6, 7, 8, 9]
-
-
-    def get_set_0_1_2(self):
-        if self.topology == 'multi-line':
-            return []
-        else:
-            return [0, 1]
+    def is_set_0_2(self, client_id):
+        return client_id in self.server_control_dict[0]\
+            and client_id in self.server_control_dict[2]\
+            and client_id not in self.server_control_dict[1]
+            
+    def is_set_1_2(self, client_id):
+        return client_id in self.server_control_dict[1]\
+            and client_id in self.server_control_dict[2]\
+            and client_id not in self.server_control_dict[0]
+    
+    def is_set_0_1_2(self, client_id):
+        return client_id in self.server_control_dict[0]\
+            and client_id in self.server_control_dict[1]\
+            and client_id in self.server_control_dict[2]
+    

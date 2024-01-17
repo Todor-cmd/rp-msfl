@@ -26,7 +26,7 @@ class Arguments:
         self.clients = 20
         
         # Attack
-        self.num_attackers = 0
+        self.num_attackers = 2
         self.attack = "min-max"
     
 
@@ -35,7 +35,7 @@ class Arguments:
 
         # CUDA
         self.cuda = True
-        self.parallel = False
+        self.parallel = True
         
         self.save_final_model = False
         

@@ -103,6 +103,9 @@ def min_max(all_updates, model_re, n_attackers, dev_type='unit_vec', threshold=3
         deviation = torch.sign(model_re)
     elif dev_type == 'std':
         deviation = torch.std(all_updates, 0)
+        
+    model_re = model_re.cuda()
+    deviation = deviation.cuda()
 
     lamda = torch.Tensor([threshold]).float().cuda()
     # print(lamda)

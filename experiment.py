@@ -69,7 +69,6 @@ def run_experiment(args):
     
         # Perform Validation test
         val_loss, val_acc = test(validation[0], validation[1], global_model.fed_model, criterion, args.cuda)
-        te_loss, te_acc = test(test_set[0], test_set[1], global_model.fed_model, criterion, args.cuda)
 
         # Check if best accuracy has changed
         is_best_acc = best_global_acc < val_acc
@@ -77,15 +76,12 @@ def run_experiment(args):
         best_global_acc = max(best_global_acc, val_acc)
 
         if is_best_acc:
-            best_global_te_acc = te_acc
+            te_loss, te_acc = test(test_set[0], test_set[1], global_model.fed_model, criterion, args.cuda)
 
         # Check if best loss changed
         is_best_loss = best_global_loss > val_loss
 
         best_global_loss = min(best_global_loss, val_loss)
-
-        if is_best_loss:
-            best_global_te_loss = te_loss
 
         # mark epoch in which global model improved in loss or accuracy
         if is_best_loss or is_best_acc:
@@ -94,8 +90,8 @@ def run_experiment(args):
         print("Acc: " + str(val_acc) + " Loss: " + str(val_loss))
         results.append([val_acc, val_loss])
         if epoch_num % 10 == 0 or epoch_num == args.epochs - 1:
-            print('%s, %s: at %s n_at %d e %d fed_model val loss %.4f val acc %.4f best val_acc %f' % (
-                args.topology, args.aggregation, args.attack, args.num_attackers, epoch_num, val_loss, val_acc, best_global_acc))
+            print('%s, %s: at %s n_at %d e %d fed_model val loss %.4f val acc %.4f best val_acc %f test acc %f test loss %f' % (
+                args.topology, args.aggregation, args.attack, args.num_attackers, epoch_num, val_loss, val_acc, best_global_acc, te_acc, te_loss))
 
         if args.batch_write and epoch_num % args.batch_write == 0:
             print('Writing next batch of results at e ' + str(epoch_num))
@@ -109,7 +105,7 @@ def run_experiment(args):
             break
         
         # End experiment if model converges
-        if (epoch_num - last_pos_step_epoch) > 200:
+        if (epoch_num - last_pos_step_epoch) > 500:
             print('model convergence, last positive step in epoch %f' % last_pos_step_epoch)
             break
 
