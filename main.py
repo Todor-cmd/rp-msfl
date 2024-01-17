@@ -79,14 +79,14 @@ for i in range(nusers):
     user_tr_label_tensors.append(user_tr_label_tensor)
     print('user %d tr len %d' % (i, len(user_tr_data_tensor)))
 
-batch_size = 250
+batch_size = 165
 resume = 0
-schedule = [800, 1000, 1200, 1400]
+schedule = [700, 1000, 1200, 1400]
 nbatches = user_tr_len // batch_size
 
 gamma = .5
-opt = 'sgd'
-fed_lr = 0.5
+opt = 'vgg'
+fed_lr = 0.8
 criterion = nn.CrossEntropyLoss()
 use_cuda = torch.cuda.is_available()
 
@@ -139,7 +139,7 @@ for n_attacker in n_attackers:
             for i in range(nusers):
                 user_tr_data_tensors[i] = user_tr_data_tensors[i][r]
                 user_tr_label_tensors[i] = user_tr_label_tensors[i][r]
-
+                
         # Iterate over users, excluding attackers
         for i in range(n_attacker, nusers):
             # Get a batch of inputs and targets for the current user
@@ -269,7 +269,7 @@ for n_attacker in n_attackers:
             print('val loss %f too high' % val_loss)
             break
 
-        if (epoch_num - last_pos_step_epoch) > 100:
+        if (epoch_num - last_pos_step_epoch) > 300:
             print('model convergence, last positive step in epoch %f' % last_pos_step_epoch)
             break
 
