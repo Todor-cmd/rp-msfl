@@ -58,27 +58,31 @@ class FederatedLearning:
             agg_grads = []
             stacked_clients_in_reach = torch.stack(clients_in_reach, dim=0)
 
-            if self.args.aggregation == 'Fmes-median':
-                agg_grads = aggregations.fedmes_median(stacked_clients_in_reach, self.overlap_weight_index[server])
+            if self.args.aggregation == 'FMes-median':
+                agg_grads = aggregations.fmes_median(stacked_clients_in_reach, self.overlap_weight_index[server])
 
             elif self.args.aggregation == 'Fedmes':
-                agg_grads = aggregations.fedmes_mean(stacked_clients_in_reach, self.overlap_weight_index[server])
+                agg_grads = aggregations.fmes_mean(stacked_clients_in_reach, self.overlap_weight_index[server])
 
             elif self.args.aggregation == 'FMes-trimmed-mean':
-                agg_grads = aggregations.fedmes_tr_mean_v2(stacked_clients_in_reach, 1, self.overlap_weight_index[server])
+                agg_grads = aggregations.fmes_tr_mean(stacked_clients_in_reach, 2, self.overlap_weight_index[server])
 
             elif self.args.aggregation == 'FMes-krum':
-                agg_grads = aggregations.fedmes_multi_krum(stacked_clients_in_reach, 1, self.overlap_weight_index[server])
+                agg_grads = aggregations.fmes_multi_krum(stacked_clients_in_reach, 2, self.overlap_weight_index[server])
 
             elif self.args.aggregation == 'FMes-multi-krum':
-                agg_grads = aggregations.fedmes_multi_krum(
+                agg_grads = aggregations.fmes_multi_krum(
                     stacked_clients_in_reach,
                     self.args.num_attackers,
                     self.overlap_weight_index[server],
                     True)
 
             elif self.args.aggregation == 'FMes-bulyan':
-                agg_grads = aggregations.fedmes_bulyan(stacked_clients_in_reach, 1, self.overlap_weight_index[server])
+                agg_grads = aggregations.fmes_bulyan(stacked_clients_in_reach, 1, self.overlap_weight_index[server])
+                
+            elif self.args.aggregation == 'FMes-dnc':
+                 agg_grads = aggregations.fmes_dnc(stacked_clients_in_reach, 2, self.overlap_weight_index[server], 1, 1, 10000)
+
 
             server_aggregates.append(agg_grads)
 

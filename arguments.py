@@ -31,7 +31,7 @@ class Arguments:
     
 
         # Aggregation/Defense
-        self.aggregation = "Fedmes" # "Fedmes", "FMes-trimmed-mean", "FMes-krum", "FMes-multi-krum", "FMes-bulyan"
+        self.aggregation = "Fedmes" # "Fedmes", "FMes-trimmed-mean", "FMes-krum", "FMes-multi-krum", "FMes-bulyan", "FMes-dnc", "Fmes-median"
 
         # CUDA
         self.cuda = True
@@ -42,6 +42,6 @@ class Arguments:
         # How many epochs before the results are saved, disable with 0
         self.batch_write = 0
         
-        self.topology = "multi-cross" # "multi-cross", "multi-line
+        self.topology = "attack case 2" # "attack case 1", "attack case 2", "multi-line
 
 

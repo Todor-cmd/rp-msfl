@@ -12,7 +12,7 @@ class Test(TestCase):
         overlap_weight_index = [1, 1, 2]
 
         # Call the function
-        result = aggregations.fedmes_mean(all_updates, overlap_weight_index)
+        result = aggregations.fmes_mean(all_updates, overlap_weight_index)
 
         # Define the expected result manually based on the input
         expected_result = torch.tensor([4.75, 5.75, 6.75])
@@ -27,7 +27,7 @@ class Test(TestCase):
         overlap_weight_index = {0: 1, 1: 2, 2: 3}
 
         # Call the function
-        result = aggregations.fedmes_tr_mean_v2(all_updates, n_attackers, overlap_weight_index)
+        result = aggregations.fmes_tr_mean(all_updates, n_attackers, overlap_weight_index)
 
         # Define the expected result manually based on the input
         expected_result = torch.tensor([4.0, 5.0, 6.0])
@@ -42,7 +42,7 @@ class Test(TestCase):
         overlap_weight_index = {0: 1, 1: 2, 2: 3, 3: 4}
 
         # Call the function
-        result = aggregations.fedmes_tr_mean_v2(all_updates, n_attackers, overlap_weight_index)
+        result = aggregations.fmes_tr_mean(all_updates, n_attackers, overlap_weight_index)
 
         # Define the expected result manually based on the input
         expected_result = torch.tensor([5.0, 7.25, 7.8])
@@ -57,7 +57,7 @@ class Test(TestCase):
         overlap_weight_index = {0: 1, 1: 2, 2: 3, 3: 4}
 
         # Call the function
-        result = aggregations.fedmes_bulyan(all_updates, n_attackers, overlap_weight_index)
+        result = aggregations.fmes_bulyan(all_updates, n_attackers, overlap_weight_index)
 
 
 

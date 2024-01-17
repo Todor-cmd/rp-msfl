@@ -5,6 +5,10 @@ from federated_learning import FederatedLearning
 
 import torch.nn as nn
 
+import seaborn as sns
+
+import matplotlib.pyplot as plt 
+
 from cifar10.cifar10_normal_train import *
 
 from utils.misc import get_time_string
@@ -105,11 +109,19 @@ def run_experiment(args):
             break
         
         # End experiment if model converges
-        if (epoch_num - last_pos_step_epoch) > 500:
+        if (epoch_num - last_pos_step_epoch) > 250:
             print('model convergence, last positive step in epoch %f' % last_pos_step_epoch)
             break
 
         epoch_num += 1
+    
+    # Plot results
+    y_axis = [accuracy for accuracy, loss in results]
+
+    sns.lineplot(data = y_axis)
+    plt.xlabel('Epoch')
+    plt.ylabel('Validation Accuracy')
+    plt.show()
     
     # Save to results file at the end of experiment 
     print('Saving to ' + results_file)
