@@ -115,13 +115,16 @@ def run_experiment(args):
 
         epoch_num += 1
     
+    # Add final test accuracy to final row of results
+    results[-1].append(te_acc)
+    
     # Plot results
-    y_axis = [accuracy for accuracy, loss in results]
+    # y_axis = [accuracy for accuracy, loss in results]
 
-    sns.lineplot(data = y_axis)
-    plt.xlabel('Epoch')
-    plt.ylabel('Validation Accuracy')
-    plt.show()
+    # sns.lineplot(data = y_axis)
+    # plt.xlabel('Epoch')
+    # plt.ylabel('Validation Accuracy')
+    # plt.show()
     
     # Save to results file at the end of experiment 
     print('Saving to ' + results_file)
@@ -131,7 +134,7 @@ def run_experiment(args):
     else:
         with open(results_file, 'w') as csvfile:
             csvwriter = csv.writer(csvfile)
-            csvwriter.writerow(['Accuracy', 'Loss'])
+            csvwriter.writerow(['Validation Accuracy', 'Validation Loss', 'Final Test Accuracy'])
             csvwriter.writerows(results)
     if args.save_final_model:
         weights_file = './pretrained/' + get_time_string() + '-'\

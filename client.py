@@ -1,6 +1,7 @@
 import torch
 
-from cifar10.cifar10_models import return_model
+from cifar10.cifar10_models import return_model as return_model_cifar10
+from fashion.fashion_models import return_model as return_model_fashion
 from cifar10.sgd import SGD
 
 
@@ -14,6 +15,12 @@ class Client:
         self.fed_lr = args.fed_lr
         self.criterion = criterion
 
+        return_model = None
+        if args.dataset == 'cifar10':
+            return_model = return_model_cifar10
+        elif args.dataset == 'fashionmnist':
+            return_model = return_model_fashion
+            
         self.fed_model, self.optimizer_fed = return_model(self.model_type,\
                                                           lr=args.fed_lr,\
                                                           momentum=0.9,\

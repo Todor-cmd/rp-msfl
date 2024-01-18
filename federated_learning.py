@@ -81,7 +81,7 @@ class FederatedLearning:
                 agg_grads = aggregations.fmes_bulyan(stacked_clients_in_reach, 1, self.overlap_weight_index[server])
                 
             elif self.args.aggregation == 'FMes-dnc':
-                 agg_grads = aggregations.fmes_dnc(stacked_clients_in_reach, 2, self.overlap_weight_index[server], 1, 1, 10000)
+                 agg_grads = aggregations.fmes_dnc(stacked_clients_in_reach, 2, self.overlap_weight_index[server], 2, 2, 10000)
 
 
             server_aggregates.append(agg_grads)
