@@ -13,18 +13,20 @@ def main():
     args6 = Arguments()
     args7 = Arguments()
     args8 = Arguments()
+    args9 = Arguments()
+    args10 = Arguments()
     
     args1.topology = "attack case 1"
-    args2.topology = "attack case 2"
+    args2.aggregation = "FMes-trimmed-mean"
+    args3.aggregation = "FMes-krum"
+    args4.aggregation = "FMes-multi-krum"
+    args5.aggregation = "FMes-bulyan"
+    args6.aggregation = "FMes-dnc"
+    args7.aggregation = "FMes-median"
+    args8.num_attackers = 0
     
-    args3.aggregation = "FMes-trimmed-mean"
-    args4.aggregation = "FMes-krum"
-    args5.aggregation = "FMes-multi-krum"
-    args6.aggregation = "FMes-median"
-    args7.aggregation = "FMes-bulyan"
-    args8.aggregation = "FMes-dnc"
     
-    args = [args1, args2, args3, args4, args5, args6, args7, args8]
+    args = [args1, args2, args3, args4, args5, args6, args7, args8, args9, args10]
     for a in args:
         run_experiment(a)
 

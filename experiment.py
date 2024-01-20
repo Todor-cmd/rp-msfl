@@ -42,6 +42,7 @@ def run_experiment(args):
                                 + str(args.num_attackers) + 'att-'\
                                 + args.attack             + '-'\
                                 + args.arch               + '.csv'
+    print('Results will be saved in: ' + results_file)
     results = []
     if args.batch_write:
         print('Results will be saved in: ' + results_file)
