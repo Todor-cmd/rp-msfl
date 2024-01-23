@@ -61,6 +61,8 @@ class FederatedLearning:
             if self.args.aggregation == 'FMes-median':
                 agg_grads = aggregations.fmes_median(stacked_clients_in_reach, self.overlap_weight_index[server])
 
+            elif self.args.aggregation == 'FedAvg':
+                agg_grads = torch.mean(stacked_clients_in_reach, dim=0)
             elif self.args.aggregation == 'Fedmes':
                 agg_grads = aggregations.fmes_mean(stacked_clients_in_reach, self.overlap_weight_index[server])
 
@@ -82,6 +84,9 @@ class FederatedLearning:
                 
             elif self.args.aggregation == 'FMes-dnc':
                  agg_grads = aggregations.fmes_dnc(stacked_clients_in_reach, 2, self.overlap_weight_index[server], 2, 2, 10000)
+                 
+            elif self.args.aggregation == 'MS-dnc':
+                agg_grads = aggregations.ms_dnc(stacked_clients_in_reach, 2, self.overlap_weight_index[server], 1, 1, 10000)
 
 
             server_aggregates.append(agg_grads)

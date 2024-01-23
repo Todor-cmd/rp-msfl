@@ -62,7 +62,7 @@ class Test(TestCase):
 
     def test_svd(self):
         # Example input data
-        all_updates = torch.tensor([[1.0, 2.0], [3.0, 8.0]])
+        all_updates = torch.tensor([[1.0, 2.0, 3.0], [3.0, 8.0, 3.0]])
         
 
         print(torch.svd(all_updates))

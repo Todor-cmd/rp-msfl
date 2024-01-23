@@ -182,12 +182,12 @@ def fmes_bulyan(all_updates, n_attackers, overlap_weight_index):
     return aggregate
    
 def fmes_dnc(all_updates, n_attackers, overlap_weight_index, filtering_fraction, niters, subsample_dimension):
-    selected_indices_set = set()
+    selected_indices_sets = []
 
     gradient_dimension = all_updates.shape[1]
     
     for _ in range(niters):
-        # Randomly select subsample_dimension number of dimensions
+        # Randomly select subsample_dimension number of dimensions and afterwards sort them once again
         random_dimensions = torch.sort(torch.randperm(gradient_dimension)[:subsample_dimension]).values
         
         # Subsample the input gradients using the randomly selected dimensions
@@ -201,21 +201,85 @@ def fmes_dnc(all_updates, n_attackers, overlap_weight_index, filtering_fraction,
 
         # Perform Singular Value Decomposition (SVD) to get the top right singular vector
         _, _, right_singular_vector = torch.svd(centered_gradients)
-        top_right_singular_vector = right_singular_vector[:, -1]
+        
+        # The outlier scores are the values of the variance squared and variance is given by the top right singular value
+        principle_component = right_singular_vector[:, 0]
+        
+        projection = torch.matmul(subsampled_gradients, principle_component)
+        
+        scores = torch.square(projection)
+        
+        
 
-        # Compute outlier scores based on the projections along the top right singular vector
-        outlier_scores = torch.sum((subsampled_gradients - mean_gradients) @ top_right_singular_vector[:, None], dim=1) ** 2
+        # Sort in ascending order and take indices of updates with least variance
+        last_index = len(all_updates) - int(filtering_fraction * n_attackers)
+        _, sorted_indices = torch.sort(scores)
+        selected_indices = sorted_indices[:last_index]
+        
         
         # Compute indices of the gradients with lowest outlier scores
-        selected_indices_set.update(torch.argsort(outlier_scores)[:len(outlier_scores) - int(filtering_fraction * n_attackers)])
+        selected_indices_sets.append(set(selected_indices.cpu().numpy()))
 
+    # Get intersection of all selected indices sets
+    final_indices_set = set.intersection(*selected_indices_sets)
+    
     # Get selected_updates
-    selected_indices = [i.item() for i in selected_indices_set]
-    selected_updates = all_updates[selected_indices]
+    final_selected_indices = [i for i in final_indices_set]
+    selected_updates = all_updates[final_selected_indices]
 
     # Adjust for fedmes
-    fedmes_adjusted_candidates = fmes_adjustment_selected(selected_updates, selected_indices, overlap_weight_index)
+    fedmes_adjusted_candidates = fmes_adjustment_selected(selected_updates, final_selected_indices, overlap_weight_index)
 
     aggregate = torch.mean(fedmes_adjusted_candidates, dim=0)
+
+    return aggregate
+
+def ms_dnc(all_updates, n_attackers, overlap_weight_index, filtering_fraction, niters, subsample_dimension):
+    selected_indices_sets = []
+
+    gradient_dimension = all_updates.shape[1]
+    
+    for _ in range(niters):
+        # Randomly select subsample_dimension number of dimensions and afterwards sort them once again
+        random_dimensions = torch.sort(torch.randperm(gradient_dimension)[:subsample_dimension]).values
+        
+        # Subsample the input gradients using the randomly selected dimensions
+        subsampled_gradients = all_updates[:, random_dimensions]
+        
+        # Compute the mean of the subsampled gradients along each dimension
+        mean_gradients = torch.mean(subsampled_gradients, dim=0)
+        
+        # Center the subsampled gradients by subtracting the mean
+        centered_gradients = subsampled_gradients - mean_gradients
+
+        # Perform Singular Value Decomposition (SVD) to get the top right singular vector
+        _, _, right_singular_vector = torch.svd(centered_gradients)
+        
+        # The outlier scores are the values of the variance squared and variance is given by the top right singular value
+        principle_component = right_singular_vector[:, 0]
+        
+        projection = torch.matmul(subsampled_gradients, principle_component)
+        
+        scores = torch.square(projection)
+        
+        
+
+        # Sort in ascending order and take indices of updates with least variance
+        last_index = len(all_updates) - int(filtering_fraction * n_attackers)
+        _, sorted_indices = torch.sort(scores)
+        selected_indices = sorted_indices[:last_index]
+        
+        
+        # Compute indices of the gradients with lowest outlier scores
+        selected_indices_sets.append(set(selected_indices.cpu().numpy()))
+
+    # Get intersection of all selected indices sets
+    final_indices_set = set.intersection(*selected_indices_sets)
+    
+    # Get selected_updates
+    final_selected_indices = [i for i in final_indices_set]
+    selected_updates = all_updates[final_selected_indices]
+
+    aggregate = torch.mean(selected_updates, dim=0)
 
     return aggregate
