@@ -14,7 +14,7 @@ def main():
     args7 = Arguments()
     args8 = Arguments()
     args9 = Arguments()
-    args10 = Arguments()
+    
     
     args1.topology = "attack case 1"
     args2.aggregation = "FMes-trimmed-mean"
@@ -26,7 +26,7 @@ def main():
     args8.num_attackers = 0
     
     
-    args = [args1, args2, args3, args4, args5, args6, args7, args8, args9, args10]
+    args = [args1, args2, args3, args4, args5, args6, args7, args8, args9]
     for a in args:
         run_experiment(a)
 

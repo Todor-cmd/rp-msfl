@@ -60,4 +60,9 @@ class Test(TestCase):
         result = aggregations.fmes_bulyan(all_updates, n_attackers, overlap_weight_index)
 
 
+    def test_svd(self):
+        # Example input data
+        all_updates = torch.tensor([[1.0, 2.0], [3.0, 8.0]])
+        
 
+        print(torch.svd(all_updates))
