@@ -18,7 +18,7 @@ class Arguments:
         
         self.batch_size = 200 #cifar10-vgg:165, fashionmnist-vgg: 150, fashionmnist-alexnet:200, cifar10-alexnet: 250
         self.epochs = 1500
-        self.fed_lr = 0.5 # cifar10-vgg: 0.5, fashionmnist-vgg: 0.5, fashionmnist-alexnet: 0.5, cifar10-alexnet: 0.5
+        self.fed_lr = 0.5 # cifar10-vgg: 0.5, fashionmnist-vgg: 0.5, fashionmnist-alexnet: 0.5, cifar10-alexnet: 0.8
         
         self.schedule = [600, 800] # cifar10-vgg: [800, 900, 980, 1000], cifar10-alexnet: [1000, 1200] , fashionmnist: [600, 800]
         self.gamma = 0.5 # cifar10-vgg: 0.5, cifar10-alexnet: 0.5, fashionmnist: 0.5
@@ -31,7 +31,7 @@ class Arguments:
     
 
         # Aggregation/Defense
-        self.aggregation = "FMes-dnc" # "Fedmes", "FMes-trimmed-mean", "FMes-krum", "FMes-multi-krum", "FMes-bulyan", "FMes-dnc", "FMes-median", "MS-dnc"
+        self.aggregation = "Fedmes" # "Fedmes", "FMes-trimmed-mean", "FMes-krum", "FMes-multi-krum", "FMes-bulyan", "FMes-dnc", "FMes-median", "MS-dnc"
 
         # CUDA
         self.cuda = True

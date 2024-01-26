@@ -203,9 +203,9 @@ def fmes_dnc(all_updates, n_attackers, overlap_weight_index, filtering_fraction,
         _, _, right_singular_vector = torch.svd(centered_gradients)
         
         # The outlier scores are the values of the variance squared and variance is given by the top right singular value
-        principle_component = right_singular_vector[:, 0]
+        top_right_singular_vector = right_singular_vector[:, 0]
         
-        projection = torch.matmul(subsampled_gradients, principle_component)
+        projection = torch.matmul(subsampled_gradients, top_right_singular_vector)
         
         scores = torch.square(projection)
         
@@ -259,6 +259,7 @@ def ms_dnc(all_updates, n_attackers, overlap_weight_index, filtering_fraction, n
         principle_component = right_singular_vector[:, 0]
         
         projection = torch.matmul(subsampled_gradients, principle_component)
+
         
         scores = torch.square(projection)
         
