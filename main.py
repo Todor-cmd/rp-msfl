@@ -12,8 +12,9 @@ def main():
     args5 = Arguments()
     args6 = Arguments()
     args7 = Arguments()
+    args8 = Arguments()
     args9 = Arguments()
-    args10 = Arguments()
+    
     
     
     args1.num_attackers = 0
@@ -23,16 +24,16 @@ def main():
     args5.aggregation = "FMes-bulyan"
     args6.aggregation = "FMes-dnc"
     args7.aggregation = "FMes-median"
+    args8.aggregation = "FMes-krum"
     
-    args9.aggregation = "FMes-dnc"
+    args9.aggregation = "FMes-krum"
     args9.dataset = "cifar10"
-    args9.batch_size = 250
-    args9.fed_lr = 0.8
-    args9.schedule = [1000, 1200]
+    args9.batch_size = 165
+    args9.schedule = [800, 900, 980, 1000]
     
     
   
-    args = [args6, args6, args6, args9, args9, args9]
+    args = [args8, args8, args8, args9, args9, args9]
     
     for a in args:
         run_experiment(a)

@@ -13,10 +13,10 @@ class Arguments:
         self.te_size = 5000 # Requirement: val_size + te_size = 10k
         
         # Model
-        self.arch = "alexnet" # "alexnet", "vgg11"
+        self.arch = "vgg11" # "alexnet", "vgg11"
         self.dev_type = "std" # "std"
         
-        self.batch_size = 200 #cifar10-vgg:165, fashionmnist-vgg: 150, fashionmnist-alexnet:200, cifar10-alexnet: 250
+        self.batch_size = 150 #cifar10-vgg:165, fashionmnist-vgg: 150, fashionmnist-alexnet:200, cifar10-alexnet: 250
         self.epochs = 1500
         self.fed_lr = 0.5 # cifar10-vgg: 0.5, fashionmnist-vgg: 0.5, fashionmnist-alexnet: 0.5, cifar10-alexnet: 0.8
         

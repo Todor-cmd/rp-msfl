@@ -97,6 +97,11 @@ def fmes_adjustment_selected(candidates, candidate_indices, overlap_weight_index
 def fmes_multi_krum(all_updates, n_attackers, overlap_weight_index, multi_k=False):
     candidates = []
     candidate_indices = []
+    
+    # If doing krum we have to add the fedmes bias before since only one candidate is selected.
+    if not multi_k:
+        all_updates = fmes_adjustment(all_updates, overlap_weight_index)
+    
     remaining_updates = all_updates
     all_indices = np.arange(len(all_updates))
 
